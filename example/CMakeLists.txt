@@ -22,6 +22,6 @@ FetchContent_Declare(
 )
 FetchContent_MakeAvailable(secs)
 
-add_executable(example example.cpp)
+add_executable(secs-example example.cpp)
 
-target_link_libraries(example secs sfml-graphics)
+target_link_libraries(secs-example secs sfml-graphics)
