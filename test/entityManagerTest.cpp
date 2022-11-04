@@ -1,7 +1,6 @@
 #include <secs.hpp>
 
 int main() {
-/*
     secs::EntityManager em {};
 
     secs::Entity entity1 = em.createEntity();
@@ -43,6 +42,6 @@ int main() {
     if (em.getEntityArchetypes().size() != 0) {
         return 1;
     }
-*/
+
     return 0;
 }
