@@ -8,6 +8,8 @@ project(
 
 set(CMAKE_CXX_STANDARD 14)
 
+include(CTest)
+
 enable_testing()
 
 add_subdirectory(src)
