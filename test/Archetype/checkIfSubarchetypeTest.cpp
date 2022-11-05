@@ -10,8 +10,8 @@ int main() {
     archetype2.setComponent(1, true);
     archetype2.setComponent(2, true);
 
-    if (!secs::checkIfSubarchetype(archetype1, archetype2)) { return 1; }
-    if (secs::checkIfSubarchetype(archetype2, archetype1)) { return 1; }
+    if (secs::checkIfSubarchetype(archetype1, archetype2)) { return 1; }
+    if (!secs::checkIfSubarchetype(archetype2, archetype1)) { return 1; }
 
     return 0;
 }
