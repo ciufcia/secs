@@ -1,6 +1,8 @@
 add_executable(archetypeTest archetypeTest.cpp)
 target_link_libraries(archetypeTest PUBLIC secs)
 add_test(NAME archetype-test COMMAND archetypeTest)
+set_property(archetype-test PROPERTIES LABELS "Archetype")
 add_executable(checkIfSubarchetypeTest checkIfSubarchetypeTest.cpp)
 target_link_libraries(checkIfSubarchetypeTest PUBLIC secs)
 add_test(NAME check-if-subarchetype-test COMMAND checkIfSubarchetypeTest)
+set_property(check-if-subarchetype PROPERTIES LABELS "Archetype")
