@@ -1,3 +1,1 @@
-add_executable(entityManagerTest entityManagerTest.cpp)
-target_link_libraries(entityManagerTest PUBLIC secs)
-add_test(NAME entity-manager-test COMMAND entityManagerTest)
+add_subdirectory(Archetype)
