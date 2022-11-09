@@ -20,8 +20,8 @@ jobs:
     - name: create build directory
       run: mkdir build
     - name: configure cmake
-      run: cmake build --config Release -DBUILD_TESTING=ON
+      run: cmake build -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
     - name: build
-      run: cmake --build build -DCMAKE_BUILD_TYPE=Release
+      run: cmake --build build --config Release
     - name: run tests
       run: ctest --test-dir build
