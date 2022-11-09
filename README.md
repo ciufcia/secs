@@ -1,2 +1,2 @@
 # secs
-A simplistic implementation of an ECS, written in C++
+A simplistic implementation of an ECS, written in C++.
