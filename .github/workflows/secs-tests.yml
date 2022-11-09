@@ -1,4 +1,4 @@
-name: secs
+name: secs-tests
 
 on:
   push:
@@ -13,6 +13,11 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
+    - name: get specific version of cmake
+      uses: lukka/get-cmake@latest
+      with:
+        cmakeVersion: 3.24.3             # <--= optional, overrides the _latest_ version of CMake
+        ninjaVersion: 1.11.1
     - name: run-tests
       uses: HorstBaerbel/action-ctest@1.1
       with:
