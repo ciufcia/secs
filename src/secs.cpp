@@ -19,6 +19,14 @@ bool secs::checkIfSubarchetype(const secs::Archetype &superArchetype, const secs
     return true;
 }
 
+bool secs::operator==(const Archetype& a1, const Archetype& a2) {
+    return a1.mComponents == a2.mComponents;
+}
+
+bool secs::operator!=(const Archetype& a1, const Archetype& a2) {
+    return a1.mComponents != a2.mComponents;
+}
+
 [[nodiscard]] const char * secs::EntityDoesntExist::what() const noexcept {
     return "Entity doesn't exist";
 }
@@ -92,10 +100,6 @@ void secs::ComponentManager::entityDeleted(secs::Entity entity) {
 
 [[nodiscard]] const char * secs::ECSPointerIsNULL::what() const noexcept {
     return "The pointer to the ECS is NULL";
-}
-
-[[nodiscard]] const char * secs::NotASystem::what() const noexcept {
-    return "A system class must inherit secs::System";
 }
 
 [[nodiscard]] const char * secs::SystemNotActivated::what() const noexcept {

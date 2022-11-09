@@ -8,9 +8,15 @@ project(
 
 set(CMAKE_CXX_STANDARD 14)
 
+option(BUILD_TESTING "" OFF)
 include(CTest)
 
-enable_testing()
+if(BUILD_TESTING)
+    enable_testing()
+endif()
 
 add_subdirectory(src)
-add_subdirectory(test)
+
+if(BUILD_TESTING)
+    add_subdirectory(test)
+endif()

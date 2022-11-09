@@ -35,9 +35,13 @@ private:
 
     std::bitset<SECS_MAX_COMPONENTS> mComponents {};
     friend bool checkIfSubarchetype(const Archetype& superArchetype, const Archetype& subArchetype);
+    friend bool operator==(const Archetype& a1, const Archetype& a2);
+    friend bool operator!=(const Archetype& a1, const Archetype& a2);
 };
 
 bool checkIfSubarchetype(const Archetype& superArchetype, const Archetype& subArchetype);
+bool operator==(const Archetype& a1, const Archetype& a2);
+bool operator!=(const Archetype& a1, const Archetype& a2);
 
 class EntityDoesntExist : public std::exception
 {
@@ -173,7 +177,7 @@ public:
         const char* typeName = typeid(T).name();
         auto pIter = mComponentLists.find(typeName);
         if (pIter == mComponentLists.end())
-            throw ComponentDoesntExist();
+            throw ComponentNotRecognised();
         std::shared_ptr<ComponentList<T>> pComponentList = std::static_pointer_cast<ComponentList<T>>(pIter->second);
         pComponentList->addComponent(entity);
     }
@@ -183,7 +187,7 @@ public:
         const char* typeName = typeid(T).name();
         auto pIter = mComponentLists.find(typeName);
         if (pIter == mComponentLists.end())
-            throw ComponentDoesntExist();
+            throw ComponentNotRecognised();
         std::shared_ptr<ComponentList<T>> pComponentList = std::static_pointer_cast<ComponentList<T>>(pIter->second);
         pComponentList->addComponent(entity, component);
     }
@@ -202,7 +206,7 @@ public:
         const char* typeName = typeid(T).name();
         auto pIter = mComponentLists.find(typeName);
         if (pIter == mComponentLists.end())
-            throw ComponentNotRecognised();
+            throw ComponentDoesntExist();
         std::shared_ptr<ComponentList<T>> pComponentList = std::static_pointer_cast<ComponentList<T>>(mComponentLists[typeName]);
         return pComponentList->getComponent(entity);
     }
@@ -237,17 +241,10 @@ private:
 
     std::unordered_map<Entity, std::size_t> mEntityToIndex {};
 
-    SECS *mpECS;
+    SECS *mpECS = nullptr;
 
     friend class SystemManager;
     friend class SECS;
-};
-
-class NotASystem : public std::exception
-{
-public:
-
-        const char* what() const noexcept override;
 };
 
 class SystemNotActivated : public std::exception
@@ -270,8 +267,6 @@ public:
 
     template<typename T>
     void activateSystem(System *system) {
-        if (!std::is_base_of<System, T>())
-            throw NotASystem();
         const char *typeName = typeid(T).name();
         auto pIter = mNameToSystem.find(typeName);
         if (pIter != mNameToSystem.end())
@@ -286,6 +281,8 @@ public:
         auto pIter = mNameToSystem.find(typeName);
         if (pIter == mNameToSystem.end())
             return false;
+        pIter->second->mEntities = {};
+        pIter->second->mpECS = nullptr;
         mNameToSystem.erase(pIter);
         mSystemDependencies.erase(typeName);
         return true;
