@@ -5,7 +5,7 @@
 ![GitHub release (latest by date)](https://img.shields.io/github/v/release/ciufcia/secs?logo=github&logoColor=github&style=plastic)
 ![GitHub last commit](https://img.shields.io/github/last-commit/ciufcia/secs?logo=github&style=plastic)
 
-secs is a simplistic implementation of an [ECS](https://en.wikipedia.org/wiki/Entity_component_system). It focuses on simplicity of use and development.
+secs is a simplistic implementation of an [**ECS**](https://en.wikipedia.org/wiki/Entity_component_system). It focuses on simplicity of use and development.
 
 Example usage of the libary can be found [**here**](example/example.cpp)
 
