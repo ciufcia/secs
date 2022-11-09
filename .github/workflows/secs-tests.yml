@@ -13,14 +13,15 @@ jobs:
 
     steps:
     - uses: actions/checkout@v3
-    - name: Setup cmake
+    - name: setup cmake
       uses: jwlawson/actions-setup-cmake@v1.13
       with:
         cmake-version: '3.23'
-    - name: run-tests
-      uses: HorstBaerbel/action-ctest@1.1
-      with:
-        sourcedir: '.'
-        builddir: 'build'
-        cmakeoptions: '--config Release -DBUILD_TESTING=ON'
-        ctestoptions: '-C Release' 
+    - name: create build directory
+      run: mkdir build
+    - name: configure cmake
+      run: cmake build --config Release -DBUILD_TESTING=ON
+    - name: build
+      run: cmake --build build -DCMAKE_BUILD_TYPE=Release
+    - name: run tests
+      run: ctest --test-dir build
