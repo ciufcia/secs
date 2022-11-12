@@ -1,5 +1,7 @@
 #include <secs.hpp>
 
+#include <iostream>
+
 struct Comp
 {
     int a = 0;

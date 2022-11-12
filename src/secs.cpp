@@ -3,28 +3,42 @@
 #include <unordered_map>
 
 void secs::Archetype::setComponent(secs::ComponentId id, bool value) {
-    mComponents.set(id, value);
+    if (id >= mComponents.size()) {
+        mComponents.resize(id + 1, false);
+    }
+    mComponents[id] = value;
 }
 
 bool secs::Archetype::isComponentSet(secs::ComponentId id) {
-    return mComponents.test(id);
+    if (id >= mComponents.size())
+        return false;
+    return mComponents[id];
 }
 
 bool secs::checkIfSubarchetype(const secs::Archetype &superArchetype, const secs::Archetype &subArchetype) {
-    for (secs::ComponentId id = 0u; id < SECS_MAX_COMPONENTS; id++) {
-        if (superArchetype.mComponents[id] && !(subArchetype.mComponents[id])) {
-            return false;
+    for (secs::ComponentId id = 0u; id < superArchetype.mComponents.size(); id++) {
+        bool value = superArchetype.mComponents[id];
+        if (value) {
+            if (id >= subArchetype.mComponents.size() || !(subArchetype.mComponents[id])) {
+                return false;
+            }
         }
     }
     return true;
 }
 
 bool secs::operator==(const Archetype& a1, const Archetype& a2) {
-    return a1.mComponents == a2.mComponents;
+    // this can be way faster
+    if (checkIfSubarchetype(a1, a2) && checkIfSubarchetype(a2, a1))
+        return true;
+    return false;
 }
 
 bool secs::operator!=(const Archetype& a1, const Archetype& a2) {
-    return a1.mComponents != a2.mComponents;
+    // this can be way faster
+    if (checkIfSubarchetype(a1, a2) && checkIfSubarchetype(a2, a1))
+        return false;
+    return true;
 }
 
 [[nodiscard]] const char * secs::EntityDoesntExist::what() const noexcept {

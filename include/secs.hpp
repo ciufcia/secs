@@ -29,11 +29,12 @@ class Archetype
 public:
 
     void setComponent(secs::ComponentId id, bool value);
-    bool isComponentSet(ComponentId id);
+    bool isComponentSet(secs::ComponentId id);
 
 private:
 
-    std::bitset<SECS_MAX_COMPONENTS> mComponents {};
+    //std::bitset<SECS_MAX_COMPONENTS> mComponents {};
+    std::vector<bool> mComponents {};
     friend bool checkIfSubarchetype(const Archetype& superArchetype, const Archetype& subArchetype);
     friend bool operator==(const Archetype& a1, const Archetype& a2);
     friend bool operator!=(const Archetype& a1, const Archetype& a2);
@@ -392,6 +393,16 @@ public:
         mEntityManager.setEntityArchetype(entity, archetype);
         mSystemManager.updateSystemsFor(entity, archetype);
         return mComponentManager.deleteComponent<T>(entity);
+    }
+
+    template<typename T>
+    void setArchetypeComponent(secs::Archetype &archetype, bool value = true) {
+        archetype.setComponent(mComponentManager.getComponentId<T>(), value);
+    }
+
+    template<typename T>
+    bool isArchetypeComponentSet(secs::Archetype &archetype) {
+        return archetype.isComponentSet(mComponentManager.getComponentId<T>());
     }
 
     template<typename T>

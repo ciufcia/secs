@@ -7,6 +7,7 @@ project(
 )
 
 set(CMAKE_CXX_STANDARD 14)
+set(CMAKE_CXX_STANDARD_REQUIRED true)
 
 option(BUILD_TESTING "" OFF)
 include(CTest)
