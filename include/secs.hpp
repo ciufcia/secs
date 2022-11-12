@@ -32,8 +32,7 @@ public:
     bool isComponentSet(secs::ComponentId id);
 
 private:
-
-    //std::bitset<SECS_MAX_COMPONENTS> mComponents {};
+    
     std::vector<bool> mComponents {};
     friend bool checkIfSubarchetype(const Archetype& superArchetype, const Archetype& subArchetype);
     friend bool operator==(const Archetype& a1, const Archetype& a2);
