@@ -10,8 +10,6 @@
 namespace secs
 {
 
-#define SECS_MAX_COMPONENTS 32
-
 typedef std::size_t Entity;
 typedef std::size_t ComponentId;
 
@@ -32,7 +30,7 @@ public:
     bool isComponentSet(secs::ComponentId id);
 
 private:
-    
+
     std::vector<bool> mComponents {};
     friend bool checkIfSubarchetype(const Archetype& superArchetype, const Archetype& subArchetype);
     friend bool operator==(const Archetype& a1, const Archetype& a2);
@@ -146,11 +144,6 @@ class ComponentNotRecognised : public std::exception
     const char * what() const noexcept override;
 };
 
-class ComponentLimitReached : public std::exception
-{
-    const char * what() const noexcept override;
-};
-
 class ComponentManager
 {
 public:
@@ -166,8 +159,6 @@ public:
 
     template<typename T>
     ComponentId getComponentId() {
-        if (mUniqueComponentCount >= SECS_MAX_COMPONENTS)
-            throw ComponentLimitReached();
         static ComponentId id = mUniqueComponentCount++;
         return id;
     }

@@ -102,10 +102,6 @@ secs::Entity secs::EntityManager::generateNewId() {
     return "Component isn't recognised";
 }
 
-[[nodiscard]] const char * secs::ComponentLimitReached::what() const noexcept {
-    return "Component limit has been reached";
-}
-
 void secs::ComponentManager::entityDeleted(secs::Entity entity) {
     for (auto pIter = mComponentLists.begin(); pIter != mComponentLists.end(); pIter++) {
         pIter->second->entityDeleted(entity);
