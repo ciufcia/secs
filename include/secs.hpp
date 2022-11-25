@@ -228,6 +228,9 @@ protected:
         return mpECS;
     }
 
+    virtual void onEntityAdded(secs::Entity entity) {};
+    virtual void onEntityRemoved(secs::Entity entity) {};
+
 private:
 
     std::unordered_map<Entity, std::size_t> mEntityToIndex {};
@@ -310,6 +313,7 @@ public:
         System* pSystem = pIter->second;
         pSystem->mEntityToIndex.insert({entity, pSystem->mEntities.size()});
         pSystem->mEntities.push_back(entity);
+        pSystem->onEntityAdded(entity);
     }
 
     template<typename T>
@@ -322,6 +326,7 @@ public:
         std::size_t index = pSystem->mEntityToIndex.find(entity)->second;
         pSystem->mEntities.erase(pSystem->mEntities.begin() + index);
         pSystem->mEntityToIndex.erase(entity);
+        pSystem->onEntityRemoved(entity);
         return true;
     }
 
@@ -448,4 +453,4 @@ private:
 };
 }
 
-#endif //SECS_SECS_HPP
+#endif

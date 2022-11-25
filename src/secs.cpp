@@ -134,12 +134,14 @@ void secs::SystemManager::updateSystemsFor(secs::Entity entity, secs::Archetype 
             if (pSystem->mEntityToIndex.find(entity) == pSystem->mEntityToIndex.end()) {
                 pSystem->mEntityToIndex.insert({entity, pSystem->mEntities.size()});
                 pSystem->mEntities.push_back(entity);
+                pSystem->onEntityAdded(entity);
             }
         } else {
             auto pETIIter = pSystem->mEntityToIndex.find(entity);
             if (pETIIter != pSystem->mEntityToIndex.end()) {
                 pSystem->mEntities.erase(pSystem->mEntities.begin() + pETIIter->second);
                 pSystem->mEntityToIndex.erase(pETIIter);
+                pSystem->onEntityRemoved(entity);
             }
         }
     }
@@ -153,6 +155,7 @@ void secs::SystemManager::entityDeleted(secs::Entity entity) {
             continue;
         pSystem->mEntities.erase(pSystem->mEntities.begin() + pEIter->second);
         pSystem->mEntityToIndex.erase(pEIter);
+        pSystem->onEntityRemoved(entity);
     }
 }
 
