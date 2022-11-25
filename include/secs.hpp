@@ -386,6 +386,11 @@ public:
     }
 
     template<typename T>
+    bool checkIfHasComponent(Entity entity) {
+        return mEntityManager.getEntityArchetype(entity).isComponentSet(getComponentId<T>());
+    }
+
+    template<typename T>
     void setArchetypeComponent(secs::Archetype &archetype, bool value = true) {
         archetype.setComponent(mComponentManager.getComponentId<T>(), value);
     }

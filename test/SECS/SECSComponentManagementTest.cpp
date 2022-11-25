@@ -25,7 +25,11 @@ int main() {
 
     ecs.registerComponent<Comp>();
 
+    if (ecs.checkIfHasComponent<Comp>(entity)) { return 1; }
+
     ecs.addComponent<Comp>(entity);
+
+    if (!ecs.checkIfHasComponent<Comp>(entity)) { return 1; }
 
     Comp *comp = ecs.getComponent<Comp>(entity);
 
@@ -34,6 +38,8 @@ int main() {
     if (ecs.getComponent<Comp>(entity)->a != 10) { return 1; }
 
     ecs.deleteComponent<Comp>(entity);
+
+    if (ecs.checkIfHasComponent<Comp>(entity)) { return 1; }
 
     Comp c {};
     c.a = 5;
