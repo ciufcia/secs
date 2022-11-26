@@ -57,9 +57,6 @@ int main() {
     ecs.registerComponent<Renderable>();
     ecs.registerComponent<Transform>();
 
-    secs::Entity e = ecs.createEntity();
-    ecs.addComponent<Renderable>(e);
-
     Renderer renderer {&window};
     ecs.activateSystem<Renderer>(&renderer);
     ecs.setSystemDependency<Renderer, Renderable>();
