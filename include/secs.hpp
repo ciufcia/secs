@@ -326,6 +326,11 @@ public:
         std::size_t index = pSystem->mEntityToIndex.find(entity)->second;
         pSystem->mEntities.erase(pSystem->mEntities.begin() + index);
         pSystem->mEntityToIndex.erase(entity);
+        for (auto &pair : pSystem->mEntityToIndex) {
+            if (pair.second > index) {
+                pair.second--;
+            }
+        }
         pSystem->onEntityRemoved(entity);
         return true;
     }
