@@ -9,7 +9,7 @@ int main() {
 
     ecs.deleteEntity(entity);
 
-    if (ecs.deleteEntity(entity)) { return 1; }
+    ecs.deleteEntity(entity);
 
     entity = ecs.createEntity();
 

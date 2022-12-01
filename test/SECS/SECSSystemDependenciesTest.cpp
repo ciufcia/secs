@@ -54,7 +54,7 @@ int main() {
 
     if (sys.getCompValue() != 0) { return 1; }
 
-    ecs.deleteComponent<Comp>(entity);
+    ecs.removeComponent<Comp>(entity);
 
     if (sys.getCompValue() != 1) { return 1; }
 

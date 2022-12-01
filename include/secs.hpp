@@ -2,10 +2,9 @@
 #define SECS_SECS_HPP
 
 #include <vector>
-#include <bitset>
-#include <map>
 #include <unordered_map>
 #include <memory>
+#include <algorithm>
 
 namespace secs
 {
@@ -53,10 +52,10 @@ class EntityManager
 public:
 
     Entity createEntity();
-    bool deleteEntity(Entity entity);
+    void deleteEntity(Entity entity);
 
     Archetype getEntityArchetype(Entity entity) const;
-    void setEntityArchetype(Entity entity, Archetype archetype);
+    void setEntityArchetype(Entity entity, const Archetype &archetype);
 
     const std::unordered_map<Entity, Archetype> & getEntityArchetypes() const noexcept;
 
@@ -75,7 +74,7 @@ class BaseComponentList
 public:
 
     virtual ~BaseComponentList() = default;
-    virtual bool deleteComponent(Entity entity) = 0;
+    virtual void deleteComponent(Entity entity) = 0;
     virtual void entityDeleted(Entity entity) = 0;
 };
 
@@ -100,40 +99,44 @@ class ComponentList : public BaseComponentList
 public:
 
     void addComponent(Entity entity) {
-        auto pIter = mComponents.find(entity);
-        if (pIter != mComponents.end())
+        if (checkIfComponentExists(entity))
             throw DuplicateComponent();
+
         mComponents.insert({entity, T()});
     }
 
     void addComponent(Entity entity, T component) {
-        auto pIter = mComponents.find(entity);
-        if (pIter != mComponents.end())
+        if (checkIfComponentExists(entity))
             throw DuplicateComponent();
+
         mComponents.insert({entity, component});
     }
 
-
-    bool deleteComponent(Entity entity) override {
-        auto pIter = mComponents.find(entity);
-        if (pIter == mComponents.end())
-            return false;
-        mComponents.erase(pIter);
-        return true;
+    void deleteComponent(Entity entity) override {
+        mComponents.erase(getComponentIterator(entity));
     }
 
     void entityDeleted(Entity entity) override {
-        mComponents.erase(entity);
+        mComponents.erase(getComponentIterator<EntityDoesntExist>(entity));
     }
 
     T * getComponent(Entity entity) {
-        auto pIter = mComponents.find(entity);
-        if (pIter == mComponents.end())
-            throw ComponentDoesntExist();
-        return &(pIter->second);
+        return &(getComponentIterator(entity)->second);
     }
 
 private:
+
+    bool checkIfComponentExists(Entity entity) {
+        return mComponents.find(entity) != mComponents.end();
+    }
+
+    template<typename TError = ComponentDoesntExist>
+    typename std::unordered_map<Entity, T>::iterator getComponentIterator(Entity entity) {
+        auto pIter = mComponents.find(entity);
+        if (pIter == mComponents.end())
+            throw TError();
+        return pIter;
+    }
 
     std::unordered_map<Entity, T> mComponents {};
 };
@@ -151,9 +154,12 @@ public:
     template<typename T>
     void registerComponent() {
         const char* typeName = typeid(T).name();
+
         if (mComponentLists.find(typeName) != mComponentLists.end())
             throw DuplicateComponent();
+
         std::shared_ptr<ComponentList<T>> pComponentList = std::make_shared<ComponentList<T>>();
+
         mComponentLists.insert({typeName, pComponentList});
     }
 
@@ -165,46 +171,39 @@ public:
 
     template<typename T>
     void addComponent(Entity entity) {
-        const char* typeName = typeid(T).name();
-        auto pIter = mComponentLists.find(typeName);
-        if (pIter == mComponentLists.end())
-            throw ComponentNotRecognised();
-        std::shared_ptr<ComponentList<T>> pComponentList = std::static_pointer_cast<ComponentList<T>>(pIter->second);
-        pComponentList->addComponent(entity);
+        getComponentList<T>()->addComponent(entity);
     }
 
     template<typename T>
     void addComponent(Entity entity, T component) {
-        const char* typeName = typeid(T).name();
-        auto pIter = mComponentLists.find(typeName);
-        if (pIter == mComponentLists.end())
-            throw ComponentNotRecognised();
-        std::shared_ptr<ComponentList<T>> pComponentList = std::static_pointer_cast<ComponentList<T>>(pIter->second);
-        pComponentList->addComponent(entity, component);
+        getComponentList<T>()->addComponent(entity, component);
     }
 
     template<typename T>
-    bool deleteComponent(Entity entity) {
-        const char* typeName = typeid(T).name();
-        auto pIter = mComponentLists.find(typeName);
-        if (pIter == mComponentLists.end())
-            return false;
-        return pIter->second->deleteComponent(entity);
+    void removeComponent(Entity entity) {
+        getComponentList<T>()->deleteComponent(entity);
     }
 
     template<typename T>
     T * getComponent(Entity entity) {
-        const char* typeName = typeid(T).name();
-        auto pIter = mComponentLists.find(typeName);
-        if (pIter == mComponentLists.end())
-            throw ComponentDoesntExist();
-        std::shared_ptr<ComponentList<T>> pComponentList = std::static_pointer_cast<ComponentList<T>>(mComponentLists[typeName]);
-        return pComponentList->getComponent(entity);
+        return getComponentList<T>()->getComponent(entity);
     }
 
     void entityDeleted(Entity entity);
 
 private:
+
+    template<typename T, typename TError = ComponentNotRecognised>
+    std::shared_ptr<ComponentList<T>> getComponentList() {
+        const char *typeName = typeid(T).name();
+
+        auto pIter = mComponentLists.find(typeName);
+
+        if (pIter == mComponentLists.end())
+            throw TError();
+
+        return std::static_pointer_cast<ComponentList<T>>(mComponentLists[typeName]);
+    }
 
     std::unordered_map<const char*, std::shared_ptr<BaseComponentList>> mComponentLists {};
 
@@ -262,77 +261,98 @@ public:
     template<typename T>
     void activateSystem(System *system) {
         const char *typeName = typeid(T).name();
+
         auto pIter = mNameToSystem.find(typeName);
+
         if (pIter != mNameToSystem.end())
             throw SystemAlreadyActivated();
+
         mNameToSystem.insert({typeName, system});
         mSystemDependencies.insert({typeName, Archetype()});
     }
 
     template<typename T>
-    bool deactivateSystem() {
-        const char *typeName = typeid(T).name();
-        auto pIter = mNameToSystem.find(typeName);
-        if (pIter == mNameToSystem.end())
-            return false;
+    void deactivateSystem() {
+        auto pIter = getSystemPair<T>();
+
         pIter->second->mEntities = {};
         pIter->second->mpECS = nullptr;
+
         mNameToSystem.erase(pIter);
-        mSystemDependencies.erase(typeName);
-        return true;
+        mSystemDependencies.erase(typeid(T).name());
     }
 
     template<typename T>
-    Archetype getSystemDependencies() const {
-        const char *typeName = typeid(T).name();
-        auto pIter = mSystemDependencies.find(typeName);
-        if (pIter == mSystemDependencies.end())
-            throw SystemNotActivated();
-        return pIter->second;
+    Archetype getSystemDependencies() {
+        return getSystemDependenciesPair<T>()->second;
     }
 
-    Archetype getSystemDependencies(const char *systemName) const;
+    Archetype getSystemDependencies(const char *systemName);
 
     template<typename T>
     void setSystemDependencies(const Archetype &dependencies) {
-        const char *typeName = typeid(T).name();
-        auto pIter = mSystemDependencies.find(typeName);
-        if (pIter == mSystemDependencies.end())
-            throw SystemNotActivated();
-        pIter->second = dependencies;
+        getSystemDependenciesPair<T>()->second = dependencies;
     }
 
-    void updateSystemsFor(Entity entity, Archetype entityArchetype);
+    void updateSystemsFor(Entity entity, const Archetype &entityArchetype);
 
     template<typename T>
     void addEntityToSystem(Entity entity) {
-        const char *typeName = typeid(T).name();
-        auto pIter = mNameToSystem.find(typeName);
-        if (pIter == mNameToSystem.end())
-            throw SystemNotActivated();
-        System* pSystem = pIter->second;
+        System *pSystem = getSystemPair<T>()->second;
+
+        if (pSystem->mEntityToIndex.find(entity) != pSystem->mEntityToIndex.end())
+            return;
+
+        pSystem->mEntityToIndex.insert({entity, pSystem->mEntities.size()});
+        pSystem->mEntities.push_back(entity);
+        pSystem->onEntityAdded(entity);
+    }
+
+    void addEntityToSystem(Entity entity, const char *systemName) {
+        System *pSystem = getSystemPair(systemName)->second;
+
+        if (pSystem->mEntityToIndex.find(entity) != pSystem->mEntityToIndex.end())
+            return;
+
         pSystem->mEntityToIndex.insert({entity, pSystem->mEntities.size()});
         pSystem->mEntities.push_back(entity);
         pSystem->onEntityAdded(entity);
     }
 
     template<typename T>
-    bool removeEntityFromSystem(Entity entity) {
-        const char *typeName = typeid(T).name();
-        auto pIter = mNameToSystem.find(typeName);
-        if (pIter == mNameToSystem.end())
-            return false;
-        System* pSystem = pIter->second;
-        std::size_t index = pSystem->mEntityToIndex.find(entity)->second;
+    void removeEntityFromSystem(Entity entity) {
+        System* pSystem = getSystemPair<T>()->second;
+
+        auto pETIIter = pSystem->mEntityToIndex.find(entity);
+
+        if (pETIIter == pSystem->mEntityToIndex.end())
+            return;
+
+        std::size_t index = pETIIter->second;
+
         pSystem->mEntities.erase(pSystem->mEntities.begin() + index);
         pSystem->mEntityToIndex.erase(entity);
-        for (auto &pair : pSystem->mEntityToIndex) {
-            if (pair.second > index) {
-                pair.second--;
-            }
-        }
+
+        updateSystemEntitiesMapping(*pSystem, index);
+
         pSystem->onEntityRemoved(entity);
-        return true;
+    }
+
+    void removeEntityFromSystem(Entity entity, const char *systemName) {
+        System* pSystem = getSystemPair(systemName)->second;
+
+        auto pETIIter = pSystem->mEntityToIndex.find(entity);
+        if (pETIIter == pSystem->mEntityToIndex.end())
+            return;
+
+        std::size_t index = pETIIter->second;
+
+        pSystem->mEntities.erase(pSystem->mEntities.begin() + index);
+        pSystem->mEntityToIndex.erase(entity);
+
+        updateSystemEntitiesMapping(*pSystem, index);
+
+        pSystem->onEntityRemoved(entity);
     }
 
     void entityDeleted(Entity entity);
@@ -340,8 +360,59 @@ public:
 
 private:
 
+    template<typename T>
+    std::unordered_map<const char *, System *>::iterator getSystemPair() {
+        const char *typeName = typeid(T).name();
+
+        auto pIter = mNameToSystem.find(typeName);
+
+        if (pIter == mNameToSystem.end())
+            throw SystemNotActivated();
+
+        return pIter;
+    }
+
+    std::unordered_map<const char *, System *>::iterator getSystemPair(const char *systemName) {
+
+        auto pIter = mNameToSystem.find(systemName);
+
+        if (pIter == mNameToSystem.end())
+            throw SystemNotActivated();
+
+        return pIter;
+    }
+
+    template<typename T>
+    std::unordered_map<const char *, Archetype>::iterator getSystemDependenciesPair() {
+        const char *typeName = typeid(T).name();
+
+        auto pIter = mSystemDependencies.find(typeName);
+
+        if (pIter == mSystemDependencies.end())
+            throw SystemNotActivated();
+
+        return pIter;
+    }
+
+    std::unordered_map<const char *, Archetype>::iterator getSystemDependenciesPair(const char *systemName) {
+        auto pIter = mSystemDependencies.find(systemName);
+
+        if (pIter == mSystemDependencies.end())
+            throw SystemNotActivated();
+
+        return pIter;
+    }
+
+    static void updateSystemEntitiesMapping(System &system, std::size_t deletedIndex) {
+        for (auto &pair : system.mEntityToIndex) {
+            if (pair.second > deletedIndex) {
+                pair.second--;
+            }
+        }
+    }
+
     std::unordered_map<const char *, System *> mNameToSystem {};
-    std::map<const char *, Archetype> mSystemDependencies {};
+    std::unordered_map<const char *, Archetype> mSystemDependencies {};
 };
 
 class SECS
@@ -351,7 +422,7 @@ public:
     ~SECS();
 
     Entity createEntity();
-    bool deleteEntity(Entity entity);
+    void deleteEntity(Entity entity);
 
     template<typename T>
     ComponentId getComponentId() {
@@ -371,28 +442,42 @@ public:
     template<typename T>
     void addComponent(Entity entity) {
         mComponentManager.addComponent<T>(entity);
+
         Archetype archetype = mEntityManager.getEntityArchetype(entity);
+
         archetype.setComponent(this->getComponentId<T>(), true);
+
         mEntityManager.setEntityArchetype(entity, archetype);
+
         mSystemManager.updateSystemsFor(entity, archetype);
     }
 
     template<typename T>
     void addComponent(Entity entity, T component) {
+
         mComponentManager.addComponent<T>(entity, component);
+
         Archetype archetype = mEntityManager.getEntityArchetype(entity);
+
         archetype.setComponent(this->getComponentId<T>(), true);
+
         mEntityManager.setEntityArchetype(entity, archetype);
+
         mSystemManager.updateSystemsFor(entity, archetype);
     }
 
     template<typename T>
-    bool deleteComponent(Entity entity) {
+    void removeComponent(Entity entity) {
+
         Archetype archetype = mEntityManager.getEntityArchetype(entity);
+
         archetype.setComponent(this->getComponentId<T>(), false);
+
         mEntityManager.setEntityArchetype(entity, archetype);
+
         mSystemManager.updateSystemsFor(entity, archetype);
-        return mComponentManager.deleteComponent<T>(entity);
+
+        mComponentManager.removeComponent<T>(entity);
     }
 
     template<typename T>
@@ -413,40 +498,44 @@ public:
     template<typename T>
     void activateSystem(System *system) {
         system->mpECS = this;
+
         mSystemManager.activateSystem<T>(system);
-        const std::unordered_map<Entity, Archetype> entityArchetypes = mEntityManager.getEntityArchetypes();
-        for (auto cpIter = entityArchetypes.begin(); cpIter != entityArchetypes.end(); cpIter++) {
-            mSystemManager.addEntityToSystem<T>(cpIter->first);
-        }
+
+        for (const auto &iter: mEntityManager.getEntityArchetypes())
+            mSystemManager.addEntityToSystem<T>(iter.first);
     }
 
     template<typename T>
-    bool deactivateSystem() {
-        return mSystemManager.deactivateSystem<T>();
+    void deactivateSystem() {
+        mSystemManager.deactivateSystem<T>();
     }
 
     template<typename T>
-    Archetype getSystemDependencies() const {
+    Archetype getSystemDependencies() {
         return mSystemManager.getSystemDependencies<T>();
     }
 
     template<typename T>
     void setSystemDependencies(Archetype dependencies) {
         mSystemManager.setSystemDependencies<T>(dependencies);
-        const std::unordered_map<Entity, Archetype> entityArchetypes = mEntityManager.getEntityArchetypes();
-        for (auto cpIter = entityArchetypes.begin(); cpIter != entityArchetypes.end(); cpIter++) {
-            if (!checkIfSubarchetype(dependencies, cpIter->second)) {
-                mSystemManager.removeEntityFromSystem<T>(cpIter->first);
+
+        for (auto &iter : mEntityManager.getEntityArchetypes()) {
+            if (checkIfSubarchetype(dependencies, iter.second)) {
+                mSystemManager.addEntityToSystem<T>(iter.first);
+
                 continue;
             }
-            mSystemManager.addEntityToSystem<T>(cpIter->first);
+
+            mSystemManager.removeEntityFromSystem<T>(iter.first);
         }
     }
 
     template<typename TSystem, typename TComponent>
     void setSystemDependency(bool value = true) {
         Archetype archetype = getSystemDependencies<TSystem>();
+
         archetype.setComponent(getComponentId<TComponent>(), value);
+
         setSystemDependencies<TSystem>(archetype);
     }
 

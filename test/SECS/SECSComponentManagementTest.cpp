@@ -37,7 +37,7 @@ int main() {
 
     if (ecs.getComponent<Comp>(entity)->a != 10) { return 1; }
 
-    ecs.deleteComponent<Comp>(entity);
+    ecs.removeComponent<Comp>(entity);
 
     if (ecs.checkIfHasComponent<Comp>(entity)) { return 1; }
 
@@ -48,7 +48,7 @@ int main() {
 
     if (ecs.getComponent<Comp>(entity)->a != 5) { return 1; }
 
-    ecs.deleteComponent<Comp>(entity);
+    ecs.removeComponent<Comp>(entity);
 
     try { ecs.getComponent<Comp>(entity); }
     catch(secs::ComponentDoesntExist) { threw = true; }

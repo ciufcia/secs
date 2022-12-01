@@ -35,7 +35,7 @@ int main() {
 
     if (componentManager.getComponent<Comp>(entity)->a != 10) { return 1; }
 
-    componentManager.deleteComponent<Comp>(entity);
+    componentManager.removeComponent<Comp>(entity);
 
     try { componentManager.getComponent<Comp>(entity); }
     catch(secs::ComponentDoesntExist) { threw = true; }
