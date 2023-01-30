@@ -1,0 +1,27 @@
+name: tests
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+
+    runs-on: ubuntu-latest
+
+    steps:
+    - uses: actions/checkout@v3
+    - name: setup cmake
+      uses: jwlawson/actions-setup-cmake@v1.13
+      with:
+        cmake-version: '3.23'
+    - name: create build directory
+      run: mkdir build
+    - name: configure cmake
+      run: cmake -B build -S . -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=ON
+    - name: build
+      run: cmake --build build --config Release
+    - name: run tests
+      run: ctest --test-dir build
