@@ -1,0 +1,6 @@
+add_subdirectory(Archetype)
+add_subdirectory(EntityManager)
+add_subdirectory(ComponentList)
+add_subdirectory(ComponentManager)
+add_subdirectory(SystemManager)
+add_subdirectory(SECS)
