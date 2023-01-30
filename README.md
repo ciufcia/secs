@@ -7,6 +7,6 @@
 
 secs is a simplistic implementation of an [**ECS**](https://en.wikipedia.org/wiki/Entity_component_system) written in C++. It focuses on simplicity of use and development.
 
-Example usage of the libary can be found [**here**](example/example.cpp).
+Example usage of the libary can be found [**here**](example/basics.cpp).
 
 > Note that secs is a hobbyist project and has a lot of room for improvement. Feel free to contribute, to make it better!
