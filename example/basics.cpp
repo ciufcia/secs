@@ -1,7 +1,3 @@
-//
-// Created by jacob on 1/27/2023.
-//
-
 #include <secs.hpp>
 
 #include <vector>
