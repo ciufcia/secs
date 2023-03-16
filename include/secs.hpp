@@ -350,6 +350,7 @@ namespace secs
             System* pSystem = getSystemPair(systemName)->second;
 
             auto pETIIter = pSystem->mEntityToIndex.find(entity);
+
             if (pETIIter == pSystem->mEntityToIndex.end())
                 return;
 

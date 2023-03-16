@@ -188,23 +188,16 @@ void secs::SystemManager::updateSystemsFor(secs::Entity entity, const secs::Arch
 }
 
 void secs::SystemManager::entityDeleted(secs::Entity entity) {
-    for (auto iter : mNameToSystem) {
-        secs::System *pSystem = iter.second;
-
-        auto pETIIter = pSystem->mEntityToIndex.find(entity);
-
-        if (pETIIter == pSystem->mEntityToIndex.end())
-            continue;
-
-        pSystem->mEntities.erase(pSystem->mEntities.begin() + pETIIter->second);
-        pSystem->mEntityToIndex.erase(pETIIter);
-        pSystem->onEntityRemoved(entity);
-    }
+    for (auto &iter : mNameToSystem)
+        removeEntityFromSystem(entity, iter.first);
 }
 
 void secs::SystemManager::sECSDeleted() {
-    for (auto &iter : mNameToSystem)
+    for (auto &iter : mNameToSystem) {
         iter.second->mpECS = nullptr;
+        iter.second->mEntities = {};
+        iter.second->mEntityToIndex = {};
+    }
 }
 
 secs::SECS::~SECS() {
